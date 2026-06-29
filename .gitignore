@@ -216,3 +216,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+# AegisOps AI
+backend/venv/
+backend/__pycache__/
