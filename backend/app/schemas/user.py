@@ -1,6 +1,9 @@
 from pydantic import BaseModel, EmailStr
 
 
+# ----------------------------
+# Register
+# ----------------------------
 class UserCreate(BaseModel):
     full_name: str
     email: EmailStr
@@ -15,3 +18,19 @@ class UserResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# ----------------------------
+# Login
+# ----------------------------
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+
+# ----------------------------
+# JWT Token
+# ----------------------------
+class Token(BaseModel):
+    access_token: str
+    token_type: str
