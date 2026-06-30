@@ -1,13 +1,23 @@
 from fastapi import FastAPI
 
-# Create a FastAPI application
+from app.db.database import engine
+from app.db.base import Base
+
+# Import the authentication router
+from app.api.auth import router as auth_router
+
+# Create all database tables
+Base.metadata.create_all(bind=engine)
+
 app = FastAPI(
     title="AegisOps AI",
-    description="Enterprise AI Operations Copilot",
     version="1.0.0"
 )
 
-# Home Route
+# Register all API routes
+app.include_router(auth_router)
+
+
 @app.get("/")
 def home():
     return {
