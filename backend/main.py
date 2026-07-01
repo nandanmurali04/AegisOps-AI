@@ -3,8 +3,9 @@ from fastapi import FastAPI
 from app.db.database import engine
 from app.db.base import Base
 
-# Import the authentication router
+# Import Routers
 from app.api.auth import router as auth_router
+from app.api.incident import router as incident_router
 
 # Create all database tables
 Base.metadata.create_all(bind=engine)
@@ -14,8 +15,9 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Register all API routes
+# Register API Routers
 app.include_router(auth_router)
+app.include_router(incident_router)
 
 
 @app.get("/")

@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from app.db.database import Base
@@ -33,3 +34,6 @@ class Incident(Base):
         server_default=func.now(),
         onupdate=func.now()
     )
+
+    # Relationship with User
+    owner = relationship("User", back_populates="incidents")
