@@ -1,15 +1,18 @@
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from app.db.database import SessionLocal
-from app.schemas.user import UserCreate, UserResponse, LoginRequest, Token
+from app.dependencies.auth import get_current_user
+from app.models.user import User
+from app.schemas.user import (
+    UserCreate,
+    UserResponse,
+    LoginRequest,
+    Token,
+)
 from app.services.auth import create_user, login_user
-from app.utils.security import verify_access_token
 
 router = APIRouter()
-
-security = HTTPBearer()
 
 
 def get_db():
@@ -18,23 +21,6 @@ def get_db():
         yield db
     finally:
         db.close()
-
-
-# ------------------------------------
-# Get Current User from JWT
-# ------------------------------------
-def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security)
-):
-    payload = verify_access_token(credentials.credentials)
-
-    if payload is None:
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid or expired token"
-        )
-
-    return payload
 
 
 # ------------------------------------
@@ -66,11 +52,16 @@ def login(user: LoginRequest, db: Session = Depends(get_db)):
 # ------------------------------------
 @router.get("/profile")
 def profile(
-    current_user=Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     return {
         "message": "Welcome!",
-        "user": current_user
+        "user": {
+            "id": current_user.id,
+            "full_name": current_user.full_name,
+            "email": current_user.email,
+            "role": current_user.role,
+        },
     }
 
 
@@ -79,9 +70,9 @@ def profile(
 # ------------------------------------
 @router.get("/admin/dashboard")
 def admin_dashboard(
-    current_user=Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
-    if current_user.get("role") != "admin":
+    if current_user.role != "admin":
         raise HTTPException(
             status_code=403,
             detail="Access denied. Admins only."
@@ -89,5 +80,10 @@ def admin_dashboard(
 
     return {
         "message": "Welcome Admin!",
-        "user": current_user
+        "user": {
+            "id": current_user.id,
+            "full_name": current_user.full_name,
+            "email": current_user.email,
+            "role": current_user.role,
+        },
     }
