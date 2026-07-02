@@ -1,9 +1,13 @@
 from sqlalchemy.orm import Session
 
 from app.models.incident import Incident
+from app.models.user import User
 from app.schemas.incident import IncidentCreate
+from app.services.incident_log import create_log
 
-
+# ---------------------------------
+# Create Incident
+# ---------------------------------
 def create_incident(
     db: Session,
     incident: IncidentCreate,
@@ -20,13 +24,26 @@ def create_incident(
     db.commit()
     db.refresh(db_incident)
 
+    # Create Audit Log
+    create_log(
+        db=db,
+        incident_id=db_incident.id,
+        user_id=user_id,
+        action="Created"
+    )
+
     return db_incident
 
-
+# ---------------------------------
+# Get All Incidents
+# ---------------------------------
 def get_all_incidents(db: Session):
     return db.query(Incident).all()
 
 
+# ---------------------------------
+# Get Incident By ID
+# ---------------------------------
 def get_incident_by_id(
     db: Session,
     incident_id: int
@@ -38,6 +55,9 @@ def get_incident_by_id(
     )
 
 
+# ---------------------------------
+# Update Incident
+# ---------------------------------
 def update_incident(
     db: Session,
     incident: Incident,
@@ -52,6 +72,38 @@ def update_incident(
     return incident
 
 
+# ---------------------------------
+# Assign Incident
+# ---------------------------------
+def assign_incident(
+    db: Session,
+    incident: Incident,
+    user_id: int
+):
+    user = db.query(User).filter(User.id == user_id).first()
+
+    if user is None:
+        return None
+
+    incident.assigned_to = user_id
+
+    db.commit()
+    db.refresh(incident)
+
+    # Create Audit Log
+    create_log(
+        db=db,
+        incident_id=incident.id,
+        user_id=user_id,
+        action="Assigned"
+    )
+
+    return incident
+
+
+# ---------------------------------
+# Delete Incident
+# ---------------------------------
 def delete_incident(
     db: Session,
     incident: Incident

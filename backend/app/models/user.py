@@ -29,9 +29,22 @@ class User(Base):
         onupdate=func.now()
     )
 
-    # Relationship with Incident
+    # Incidents created by this user
     incidents = relationship(
         "Incident",
-        back_populates="owner",
-        cascade="all, delete-orphan"
+        foreign_keys="Incident.created_by",
+        back_populates="owner"
+    )
+
+    # Incidents assigned to this user
+    assigned_incidents = relationship(
+        "Incident",
+        foreign_keys="Incident.assigned_to",
+        back_populates="assignee"
+    )
+
+    # Audit logs performed by this user
+    incident_logs = relationship(
+        "IncidentLog",
+        back_populates="user"
     )

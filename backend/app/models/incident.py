@@ -1,4 +1,11 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Text,
+    DateTime,
+    ForeignKey,
+)
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -18,10 +25,18 @@ class Incident(Base):
 
     status = Column(String, default="Open")
 
+    # User who created the incident
     created_by = Column(
         Integer,
         ForeignKey("users.id"),
         nullable=False
+    )
+
+    # User assigned to handle the incident
+    assigned_to = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=True
     )
 
     created_at = Column(
@@ -35,5 +50,23 @@ class Incident(Base):
         onupdate=func.now()
     )
 
-    # Relationship with User
-    owner = relationship("User", back_populates="incidents")
+    # Relationship to creator
+    owner = relationship(
+        "User",
+        foreign_keys=[created_by],
+        back_populates="incidents"
+    )
+
+    # Relationship to assignee
+    assignee = relationship(
+        "User",
+        foreign_keys=[assigned_to],
+        back_populates="assigned_incidents"
+    )
+
+    # Audit Logs
+    logs = relationship(
+        "IncidentLog",
+        back_populates="incident",
+        cascade="all, delete-orphan"
+    )
