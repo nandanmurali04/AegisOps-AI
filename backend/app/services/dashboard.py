@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.models.incident import Incident
 from app.models.user import User
-
+from app.models.incident_log import IncidentLog
 
 def get_dashboard_stats(db: Session):
     total_incidents = db.query(func.count(Incident.id)).scalar()
@@ -99,3 +99,12 @@ def get_user_incident_stats(db: Session):
         }
         for name, count in result
     ]
+def get_recent_activity(db: Session):
+    activities = (
+        db.query(IncidentLog)
+        .order_by(IncidentLog.timestamp.desc())
+        .limit(10)
+        .all()
+    )
+
+    return activities

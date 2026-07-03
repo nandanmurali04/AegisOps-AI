@@ -1,9 +1,11 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 
 from app.models.incident import Incident
 from app.models.user import User
 from app.schemas.incident import IncidentCreate
 from app.services.incident_log import create_log
+
 
 # ---------------------------------
 # Create Incident
@@ -34,12 +36,46 @@ def create_incident(
 
     return db_incident
 
+
 # ---------------------------------
 # Get All Incidents
 # ---------------------------------
-def get_all_incidents(db: Session):
-    return db.query(Incident).all()
+def get_all_incidents(
+    db: Session,
+    status: str = None,
+    severity: str = None,
+    search: str = None,
+    page: int = 1,
+    limit: int = 10,
+):
+    query = db.query(Incident)
 
+    if status:
+        query = query.filter(
+            Incident.status.ilike(status)
+        )
+
+    if severity:
+        query = query.filter(
+            Incident.severity.ilike(severity)
+        )
+
+    if search:
+        query = query.filter(
+            or_(
+                Incident.title.ilike(f"%{search}%"),
+                Incident.description.ilike(f"%{search}%")
+            )
+        )
+
+    offset = (page - 1) * limit
+
+    return (
+        query
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
 
 # ---------------------------------
 # Get Incident By ID

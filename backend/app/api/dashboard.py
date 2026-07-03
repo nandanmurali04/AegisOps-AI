@@ -10,6 +10,7 @@ from app.schemas.dashboard import (
     SeverityStats,
     StatusStats,
     UserIncidentStats,
+    ActivityResponse,
 )
 
 from app.services.dashboard import (
@@ -17,6 +18,7 @@ from app.services.dashboard import (
     get_severity_stats,
     get_status_stats,
     get_user_incident_stats,
+    get_recent_activity,
 )
 
 router = APIRouter(
@@ -70,3 +72,13 @@ def user_dashboard(
     db: Session = Depends(get_db),
 ):
     return get_user_incident_stats(db)
+
+# ---------------------------------
+# Recent Activity
+# ---------------------------------
+@router.get("/activity", response_model=list[ActivityResponse])
+def recent_activity(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return get_recent_activity(db)

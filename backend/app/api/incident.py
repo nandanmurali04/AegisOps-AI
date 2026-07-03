@@ -60,10 +60,22 @@ def create_new_incident(
 # -------------------------
 @router.get("/", response_model=list[IncidentResponse])
 def get_incidents(
+    status: str | None = None,
+    severity: str | None = None,
+    search: str | None = None,
+    page: int = 1,
+    limit: int = 10,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    return get_all_incidents(db)
+    return get_all_incidents(
+        db,
+        status=status,
+        severity=severity,
+        search=search,
+        page=page,
+        limit=limit,
+    )
 
 
 # -------------------------

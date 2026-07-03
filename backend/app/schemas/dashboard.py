@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from datetime import datetime
 
 
 class DashboardResponse(BaseModel):
@@ -22,3 +23,9 @@ class StatusStats(BaseModel):
 class UserIncidentStats(BaseModel):
     user: str
     incident_count: int
+
+class ActivityResponse(BaseModel):
+    incident_id: int
+    performed_by: int
+    action: str
+    timestamp: datetime
