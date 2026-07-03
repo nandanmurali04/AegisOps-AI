@@ -38,3 +38,27 @@ def get_comments_by_incident(
         .order_by(Comment.created_at.asc())
         .all()
     )
+
+# ---------------------------------
+# Update Comment
+# ---------------------------------
+def update_comment(
+    db: Session,
+    comment,
+    new_text: str
+):
+    comment.comment = new_text
+
+    db.commit()
+    db.refresh(comment)
+
+    return comment
+# ---------------------------------
+# Delete Comment
+# ---------------------------------
+def delete_comment(
+    db: Session,
+    comment
+):
+    db.delete(comment)
+    db.commit()
