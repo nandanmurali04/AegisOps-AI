@@ -12,12 +12,14 @@ from app.dependencies.auth import get_current_user
 from app.models.user import User
 
 from app.schemas.attachment import AttachmentResponse
+from fastapi.responses import FileResponse
 
 from app.services.attachment import (
     save_attachment,
     get_attachments,
+    get_attachment_by_id,
+    delete_attachment,
 )
-
 from app.services.incident import get_incident_by_id
 
 router = APIRouter(
@@ -93,3 +95,55 @@ def list_attachments(
         db,
         incident_id
     )
+# ---------------------------------
+# Download Attachment
+# ---------------------------------
+@router.get("/attachments/{attachment_id}/download")
+def download_attachment(
+    attachment_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    attachment = get_attachment_by_id(
+        db,
+        attachment_id
+    )
+
+    if attachment is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Attachment not found"
+        )
+
+    return FileResponse(
+        path=attachment.filepath,
+        filename=attachment.filename,
+    )
+# ---------------------------------
+# Delete Attachment
+# ---------------------------------
+@router.delete("/attachments/{attachment_id}")
+def remove_attachment(
+    attachment_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    attachment = get_attachment_by_id(
+        db,
+        attachment_id
+    )
+
+    if attachment is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Attachment not found"
+        )
+
+    delete_attachment(
+        db,
+        attachment
+    )
+
+    return {
+        "message": "Attachment deleted successfully"
+    }

@@ -54,3 +54,30 @@ def get_attachments(
         )
         .all()
     )
+
+# ---------------------------------
+# Get Attachment By ID
+# ---------------------------------
+def get_attachment_by_id(
+    db: Session,
+    attachment_id: int,
+):
+    return (
+        db.query(Attachment)
+        .filter(Attachment.id == attachment_id)
+        .first()
+    )
+# ---------------------------------
+# Delete Attachment
+# ---------------------------------
+def delete_attachment(
+    db: Session,
+    attachment: Attachment,
+):
+    # Delete file from uploads folder
+    if os.path.exists(attachment.filepath):
+        os.remove(attachment.filepath)
+
+    # Delete database record
+    db.delete(attachment)
+    db.commit()
