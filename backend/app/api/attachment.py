@@ -140,10 +140,10 @@ def remove_attachment(
         )
 
     delete_attachment(
-        db,
-        attachment
-    )
-
+    db=db,
+    attachment=attachment,
+    user_id=current_user.id,
+)
     return {
         "message": "Attachment deleted successfully"
     }

@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 
 from app.models.comment import Comment
+from app.services.incident_log import create_log
 
 
 # ---------------------------------
@@ -22,6 +23,14 @@ def create_comment(
     db.commit()
     db.refresh(db_comment)
 
+    # Create Audit Log
+    create_log(
+        db=db,
+        incident_id=incident_id,
+        user_id=user_id,
+        action="Comment Added"
+    )
+
     return db_comment
 
 
@@ -39,26 +48,47 @@ def get_comments_by_incident(
         .all()
     )
 
+
 # ---------------------------------
 # Update Comment
 # ---------------------------------
 def update_comment(
     db: Session,
-    comment,
-    new_text: str
+    comment: Comment,
+    new_text: str,
+    user_id: int,
 ):
     comment.comment = new_text
 
     db.commit()
     db.refresh(comment)
 
+    # Create Audit Log
+    create_log(
+        db=db,
+        incident_id=comment.incident_id,
+        user_id=user_id,
+        action="Comment Updated"
+    )
+
     return comment
+
+
 # ---------------------------------
 # Delete Comment
 # ---------------------------------
 def delete_comment(
     db: Session,
-    comment
+    comment: Comment,
+    user_id: int,
 ):
+    # Create Audit Log
+    create_log(
+        db=db,
+        incident_id=comment.incident_id,
+        user_id=user_id,
+        action="Comment Deleted"
+    )
+
     db.delete(comment)
     db.commit()

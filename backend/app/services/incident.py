@@ -5,7 +5,7 @@ from app.models.incident import Incident
 from app.models.user import User
 from app.schemas.incident import IncidentCreate
 from app.services.incident_log import create_log
-
+from app.services.email import send_email
 
 # ---------------------------------
 # Create Incident
@@ -97,13 +97,33 @@ def get_incident_by_id(
 def update_incident(
     db: Session,
     incident: Incident,
-    data: dict
+    data: dict,
+    user_id: int,
 ):
+    old_status = incident.status
+
     for key, value in data.items():
         setattr(incident, key, value)
 
     db.commit()
     db.refresh(incident)
+
+    # Log status change separately
+    if "status" in data and old_status != incident.status:
+        create_log(
+            db=db,
+            incident_id=incident.id,
+            user_id=user_id,
+            action=f"Status Changed: {old_status} → {incident.status}"
+        )
+
+    # Log general update
+    create_log(
+        db=db,
+        incident_id=incident.id,
+        user_id=user_id,
+        action="Updated"
+    )
 
     return incident
 
@@ -111,7 +131,7 @@ def update_incident(
 # ---------------------------------
 # Assign Incident
 # ---------------------------------
-def assign_incident(
+async def assign_incident(
     db: Session,
     incident: Incident,
     user_id: int
@@ -134,15 +154,42 @@ def assign_incident(
         action="Assigned"
     )
 
-    return incident
+    # Send Email Notification
+    await send_email(
+        recipients=[user.email],
+        subject="Incident Assigned - AegisOps AI",
+        body=f"""
+Hello {user.full_name},
 
+A new incident has been assigned to you.
+
+Incident: {incident.title}
+Severity: {incident.severity}
+Status: {incident.status}
+
+Please log in to AegisOps AI and begin the investigation.
+
+Regards,
+AegisOps AI
+"""
+    )
+
+    return incident
 
 # ---------------------------------
 # Delete Incident
 # ---------------------------------
 def delete_incident(
     db: Session,
-    incident: Incident
+    incident: Incident,
+    user_id: int,
 ):
+    create_log(
+        db=db,
+        incident_id=incident.id,
+        user_id=user_id,
+        action="Deleted"
+    )
+
     db.delete(incident)
     db.commit()

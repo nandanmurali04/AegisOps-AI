@@ -10,12 +10,14 @@ from app.schemas.comment import (
     CommentResponse,
     CommentUpdate,
 )
+
 from app.services.comment import (
     create_comment,
     get_comments_by_incident,
     update_comment,
     delete_comment,
 )
+
 from app.services.incident import get_incident_by_id
 
 router = APIRouter(
@@ -30,6 +32,8 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
 # ---------------------------------
 # Add Comment
 # ---------------------------------
@@ -43,7 +47,6 @@ def add_comment(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    # Check if incident exists
     incident = get_incident_by_id(
         db,
         incident_id
@@ -61,6 +64,8 @@ def add_comment(
         user_id=current_user.id,
         comment=comment.comment,
     )
+
+
 # ---------------------------------
 # Get Comments
 # ---------------------------------
@@ -88,6 +93,8 @@ def get_comments(
         db,
         incident_id
     )
+
+
 # ---------------------------------
 # Update Comment
 # ---------------------------------
@@ -126,10 +133,13 @@ def edit_comment(
         )
 
     return update_comment(
-        db,
-        comment,
-        updated_comment.comment
+        db=db,
+        comment=comment,
+        new_text=updated_comment.comment,
+        user_id=current_user.id,
     )
+
+
 # ---------------------------------
 # Delete Comment
 # ---------------------------------
@@ -164,8 +174,9 @@ def remove_comment(
         )
 
     delete_comment(
-        db,
-        comment
+        db=db,
+        comment=comment,
+        user_id=current_user.id,
     )
 
     return {

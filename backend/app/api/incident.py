@@ -4,6 +4,8 @@ from sqlalchemy.orm import Session
 from app.db.database import SessionLocal
 from app.dependencies.auth import get_current_user
 from app.models.user import User
+from app.schemas.activity import ActivityResponse
+from app.services.activity import get_activity_timeline
 
 from app.schemas.incident import (
     IncidentCreate,
@@ -145,17 +147,17 @@ def edit_incident(
     updated_data = incident_data.model_dump(exclude_unset=True)
 
     return update_incident(
-        db,
-        incident,
-        updated_data
-    )
-
+    db=db,
+    incident=incident,
+    data=updated_data,
+    user_id=current_user.id,
+)
 
 # -------------------------
 # Assign Incident
 # -------------------------
 @router.put("/{incident_id}/assign", response_model=IncidentResponse)
-def assign_incident_to_user(
+async def assign_incident_to_user(
     incident_id: int,
     assignment: AssignIncident,
     current_user: User = Depends(get_current_user),
@@ -176,7 +178,7 @@ def assign_incident_to_user(
             detail="Incident not found"
         )
 
-    updated = assign_incident(
+    updated = await assign_incident(
         db,
         incident,
         assignment.assigned_to
@@ -208,8 +210,35 @@ def remove_incident(
             detail="Incident not found"
         )
 
-    delete_incident(db, incident)
-
+    delete_incident(
+    db=db,
+    incident=incident,
+    user_id=current_user.id,
+)
     return {
         "message": "Incident deleted successfully"
     }
+# -------------------------
+# Activity Timeline
+# -------------------------
+@router.get(
+    "/{incident_id}/activity",
+    response_model=list[ActivityResponse]
+)
+def get_activity(
+    incident_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    incident = get_incident_by_id(db, incident_id)
+
+    if incident is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Incident not found"
+        )
+
+    return get_activity_timeline(
+        db,
+        incident_id
+    )

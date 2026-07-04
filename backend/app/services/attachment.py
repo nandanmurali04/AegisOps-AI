@@ -5,6 +5,7 @@ from fastapi import UploadFile
 from sqlalchemy.orm import Session
 
 from app.models.attachment import Attachment
+from app.services.incident_log import create_log
 
 
 UPLOAD_FOLDER = "uploads"
@@ -12,6 +13,9 @@ UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
+# ---------------------------------
+# Upload Attachment
+# ---------------------------------
 def save_attachment(
     db: Session,
     incident_id: int,
@@ -40,9 +44,20 @@ def save_attachment(
     db.commit()
     db.refresh(attachment)
 
+    # Create Audit Log
+    create_log(
+        db=db,
+        incident_id=incident_id,
+        user_id=user_id,
+        action="Attachment Uploaded"
+    )
+
     return attachment
 
 
+# ---------------------------------
+# Get Attachments
+# ---------------------------------
 def get_attachments(
     db: Session,
     incident_id: int,
@@ -54,6 +69,7 @@ def get_attachments(
         )
         .all()
     )
+
 
 # ---------------------------------
 # Get Attachment By ID
@@ -67,17 +83,26 @@ def get_attachment_by_id(
         .filter(Attachment.id == attachment_id)
         .first()
     )
+
+
 # ---------------------------------
 # Delete Attachment
 # ---------------------------------
 def delete_attachment(
     db: Session,
     attachment: Attachment,
+    user_id: int,
 ):
-    # Delete file from uploads folder
     if os.path.exists(attachment.filepath):
         os.remove(attachment.filepath)
 
-    # Delete database record
+    # Create Audit Log
+    create_log(
+        db=db,
+        incident_id=attachment.incident_id,
+        user_id=user_id,
+        action="Attachment Deleted"
+    )
+
     db.delete(attachment)
     db.commit()
